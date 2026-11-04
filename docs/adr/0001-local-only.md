@@ -1,0 +1,3 @@
+# Run locally, with no shared server or paid services
+
+Each person runs a private copy against their own Gmail account, and emails are classified by a local model through Ollama rather than a cloud LLM. We chose this over a hosted service or a cloud LLM API, which would likely be more accurate and easier to set up, so that the tool stays free for anyone who clones it and job-search email never leaves their machine. Do not add a cloud API or shared server without revisiting this decision; the cost we accept is a harder setup, since each person creates their own Google Cloud project, and potentially lower accuracy, which the Review List exists to contain.

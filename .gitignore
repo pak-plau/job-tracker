@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+# Gmail credentials, sign-in token, test emails and the database never leave this machine.
+data/
+# In case these are saved outside data/ by mistake.
+client_secret*.json
+credentials.json
+token.json
+test_emails.jsonl
+model_results.json
+*.db
+*.sqlite3
+.env
+.env.*
