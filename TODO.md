@@ -56,7 +56,7 @@ To pick this back up with Claude Code, open it in this folder and say "continue 
 4. [ ] Web page
 5. [ ] Setup guide for people cloning the repo
 
-Nothing is committed yet.
+Step 1 is committed on the `model-test` branch and hasn't been pushed.
 
 ## Agreed design
 
