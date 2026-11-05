@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block head %}{% if refresh %}<meta http-equiv="refresh" content="2">{% endif %}{% endblock %}
+{% block title %}Sync{% endblock %}
+{% block content %}
+<h1>Sync</h1>
+<section class="panel" aria-live="polite">
+{% if running %}
+  <p><strong>Syncing…</strong>
+  {% if run['total'] is none %}Looking for new email.{% else %}{{ run['done'] }} of {{ run['total'] }} new emails processed.{% endif %}</p>
+  {% if run['total'] %}<progress value="{{ run['done'] }}" max="{{ run['total'] }}" aria-label="Sync progress"></progress>{% endif %}
+  <p class="small muted">This keeps running if you close the page, and it can't be cancelled.</p>
+{% elif refresh %}
+  <p><strong>Starting…</strong></p>
+{% else %}
+  {% if first_sync_note %}<p>{{ first_sync_note }}</p>{% else %}<p>Last successful sync: {{ last_success | day }}.</p>{% endif %}
+  <form method="post" action="{{ url_for('sync_now') }}">
+    <button type="submit" class="primary">Sync now</button>
+    <p class="small muted">This can take minutes, since a local model reads each new email, and your computer may slow down while it runs.</p>
+  </form>
+{% endif %}
+</section>
+{% endblock %}

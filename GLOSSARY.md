@@ -39,7 +39,7 @@ The Company has offered the Role.
 _Avoid_: Accepted, hired
 
 **Needs Reply**:
-A marker on an Application with an Information Request the person has not yet cleared. It is separate from Status.
+A marker on an Application with an Information Request the person has not yet cleared. The person can also set it by hand. It is separate from Status.
 _Avoid_: Action needed, flagged, pending
 
 **Change Log**:
@@ -49,7 +49,7 @@ _Avoid_: Audit trail, history, activity feed
 ### Emails
 
 **Confirmation Email**:
-An email from a Company acknowledging that it received an Application.
+An email from a Company or job site acknowledging that an Application was received or sent to the Company.
 _Avoid_: Receipt, acknowledgement
 
 **Interview Invitation**:
@@ -73,7 +73,7 @@ A job-related email whose meaning cannot be determined with confidence.
 _Avoid_: Unknown email, low-confidence email
 
 **Job Alert**:
-A newsletter, alert or recommendation of open roles the person could apply to. It is not about an Application they already made, so it never creates or changes an Application and never goes on the Review List.
+A newsletter, alert or recommendation of open roles the person could apply to. It is not about an Application they already made, so the tracker discards it without creating or changing an Application. The person can send it to the Review List from the discarded emails if it was filed by mistake.
 _Avoid_: Job digest, job newsletter
 
 **Review List**:

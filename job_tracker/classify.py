@@ -5,6 +5,7 @@ import urllib.error
 import urllib.request
 
 OLLAMA_URL = "http://127.0.0.1:11434"
+DEFAULT_MODEL = "gemma3:4b"  # the most accurate on real labeled emails, see evals/compare.py
 CATEGORIES = ["confirmation", "interview", "info_request", "rejection", "offer", "unclear", "job_alert", "irrelevant"]
 
 SCHEMA = {
@@ -43,6 +44,10 @@ _COMPANY_SUFFIXES = {
 
 class ClassifyError(Exception):
     pass
+
+
+class UnusableAnswer(ClassifyError):
+    """The model replied, but not usefully. Retrying can't help, since the same email gets the same answer."""
 
 
 def classify(email, model, url=OLLAMA_URL, cpu=False):
@@ -88,9 +93,9 @@ def _parse_answer(content, model):
         answer = json.loads(content)
         category, company, role = answer["category"], answer["company"], answer["role"]
     except (ValueError, TypeError, KeyError):
-        raise ClassifyError(f"{model} gave an unusable answer: {content[:200]}")
+        raise UnusableAnswer(f"{model} gave an unusable answer: {content[:200]}")
     if category not in CATEGORIES or not all(isinstance(v, (str, type(None))) for v in (company, role)):
-        raise ClassifyError(f"{model} gave an unusable answer: {content[:200]}")
+        raise UnusableAnswer(f"{model} gave an unusable answer: {content[:200]}")
     return {"category": category, "company": _blank_to_none(company), "role": _blank_to_none(role)}
 
 

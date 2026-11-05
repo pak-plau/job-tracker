@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Discarded{% endblock %}
+{% block content %}
+<h1>Discarded emails</h1>
+<p class="muted">Job alerts, emails the tracker found irrelevant, and emails you dismissed. If one was filed by mistake, send it to the Review List.</p>
+<div class="panel">
+{% if emails %}
+  <div class="table">
+    <table>
+      <thead><tr><th scope="col">Email</th><th scope="col">Type</th><th scope="col">Date</th><th scope="col"><span class="muted">Actions</span></th></tr></thead>
+      <tbody>
+      {% for e in emails %}
+        <tr>
+          <td><div class="subject">{{ e['subject'] or '(no subject)' }}</div><div class="small muted">{{ e['sender'] }}</div></td>
+          <td>{{ category_names.get(e['category'], e['category']) }}</td>
+          <td>{{ e['date'] | day }}</td>
+          <td>
+            <a href="{{ e['link'] }}" target="_blank" rel="noopener noreferrer">Open in Gmail</a>
+            <form method="post" action="{{ url_for('send_to_review', email_id=e['id']) }}"><button type="submit">Send to Review List</button></form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <p class="muted">No discarded emails.</p>
+{% endif %}
+</div>
+{% endblock %}

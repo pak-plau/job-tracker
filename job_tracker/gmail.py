@@ -5,11 +5,16 @@ from datetime import datetime, timezone
 from email import message_from_bytes, policy
 from html.parser import HTMLParser
 from pathlib import Path
+from urllib.parse import quote
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 CREDENTIALS_FILE = DATA_DIR / "credentials.json"
 TOKEN_FILE = DATA_DIR / "token.json"
 SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
+SIGN_IN_EXPIRED = (
+    "Your Google sign-in has expired, which happens every 7 days. "
+    "To sign in again, activate the virtual environment in the job-tracker folder and run: python -m job_tracker sync"
+)
 
 # shortcut: only the start of an email reaches the model, raise this if the test shows decisions being cut off.
 MAX_TEXT_CHARS = 8000
@@ -27,8 +32,12 @@ SEARCH = (
 )
 
 
-def connect():
-    """Return a Gmail client, opening a browser sign-in if there is no usable saved sign-in."""
+class SignInNeeded(Exception):
+    pass
+
+
+def connect(interactive=True):
+    """Return a Gmail client. With no usable saved sign-in, open a browser, or raise SignInNeeded if not interactive."""
     from google.auth.exceptions import RefreshError
     from google.auth.transport.requests import Request
     from google.oauth2.credentials import Credentials
@@ -44,6 +53,8 @@ def connect():
         except RefreshError:
             creds = None  # revoked or expired: fall through to a new sign-in
     if not creds or not creds.valid:
+        if not interactive:
+            raise SignInNeeded(SIGN_IN_EXPIRED)
         if not CREDENTIALS_FILE.exists():
             raise SystemExit(f"Missing {CREDENTIALS_FILE}. Run scripts/setup-google.sh first.")
         flow = InstalledAppFlow.from_client_secrets_file(str(CREDENTIALS_FILE), SCOPES)
@@ -66,6 +77,29 @@ def search(service, query):
 
 def fetch(service, message_id):
     return parse_message(service.users().messages().get(userId="me", id=message_id, format="raw").execute())
+
+
+class Mailbox:
+    """The person's Gmail account, as the sync uses it."""
+
+    def __init__(self, service, address):
+        self.service = service
+        self.address = address
+
+    def ids(self, query):
+        return search(self.service, query)
+
+    def fetch(self, message_id):
+        return fetch(self.service, message_id)
+
+    def link(self, message_id):
+        # Naming the account opens the right mailbox for people signed in to several Google accounts.
+        return f"https://mail.google.com/mail/?authuser={quote(self.address, safe='')}#all/{message_id}"
+
+
+def open_mailbox(interactive=True):
+    service = connect(interactive)
+    return Mailbox(service, service.users().getProfile(userId="me").execute()["emailAddress"])
 
 
 def parse_message(response):

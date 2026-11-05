@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}{{ application['company'] }}{% endblock %}
+{% block content %}
+<h1>{{ application['company'] }} <span class="muted">· {{ application['role'] or 'Unknown role' }}</span></h1>
+<p>
+  {{ application['status'] }}
+  {% if application['needs_reply_since'] %}<span class="tag">Needs reply, waiting {{ application['needs_reply_since'] | waited }}</span>{% endif %}
+  {% if application['removed'] %}<span class="tag">Removed</span>{% endif %}
+</p>
+
+<section class="panel">
+  <h2>Timeline</h2>
+  <ol class="timeline">
+  {% for item in timeline %}
+    <li>
+      <div class="small muted">{{ item['when'] | day }}</div>
+      {% if item['email'] %}
+        <div class="subject">{{ item['email']['subject'] or '(no subject)' }}</div>
+        <div class="small muted">{{ item['email']['sender'] }} · {{ category_names.get(item['email']['category'], item['email']['category']) }} · <a href="{{ item['email']['link'] }}" target="_blank" rel="noopener noreferrer">Open in Gmail</a></div>
+      {% endif %}
+      {% for change in item['changes'] %}<div>{{ change['text'] }}</div>{% endfor %}
+    </li>
+  {% endfor %}
+  </ol>
+</section>
+
+<section class="panel">
+  <h2>Edit</h2>
+  <form method="post" action="{{ url_for('edit_application', application_id=application['id']) }}" class="stack">
+    <label>Company <input type="text" name="company" value="{{ application['company'] }}" required></label>
+    <label>Role <input type="text" name="role" value="{{ application['role'] or '' }}" placeholder="Unknown"></label>
+    <label>Status
+      <select name="status">
+        {% for status in statuses %}<option {% if status == application['status'] %}selected{% endif %}>{{ status }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="check"><input type="checkbox" name="needs_reply" {% if application['needs_reply_since'] %}checked{% endif %}> Needs Reply. Tick this if the company is waiting on you and the tracker missed it.</label>
+    <button type="submit" class="primary">Save changes</button>
+  </form>
+</section>
+
+{% if application['removed'] %}
+<form method="post" action="{{ url_for('restore', application_id=application['id']) }}"><button type="submit">Restore application</button></form>
+{% else %}
+<form method="post" action="{{ url_for('remove', application_id=application['id']) }}"><button type="submit">Remove application</button> <span class="small muted">Hides it. You can restore it later.</span></form>
+{% endif %}
+{% endblock %}

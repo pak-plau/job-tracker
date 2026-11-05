@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Review List{% endblock %}
+{% block content %}
+<h1>Review List</h1>
+{% if not emails %}<div class="panel"><p class="muted">Nothing to review.</p></div>{% endif %}
+{% for row in emails %}
+{% set e = row['email'] %}
+<section class="panel">
+  <div class="subject">{{ e['subject'] or '(no subject)' }}</div>
+  <div class="small muted">{{ e['sender'] }} · {{ e['date'] | day }} · <a href="{{ e['link'] }}" target="_blank" rel="noopener noreferrer">Open in Gmail</a></div>
+  <p><span class="tag">{{ category_names.get(e['category'], e['category']) }}</span> {{ e['review_reason'] }}</p>
+  <div class="actions">
+    {% if choices %}
+    <form class="inline" method="post" action="{{ url_for('attach', email_id=e['id']) }}">
+      <label>Attach to an application, applying what this email says
+        <select name="application_id" required>
+          <option value="">Choose…</option>
+          {% for a in choices %}<option value="{{ a['id'] }}"{% if a['id'] == row['preselected'] %} selected{% endif %}>{{ a['company'] }} · {{ a['role'] or 'Unknown role' }} · {{ a['status'] }}</option>{% endfor %}
+        </select>
+      </label>
+      <button type="submit">Attach</button>
+    </form>
+    {% endif %}
+    <form class="inline" method="post" action="{{ url_for('create', email_id=e['id']) }}">
+      <label>Company <input type="text" name="company" value="{{ e['company'] or '' }}" required></label>
+      <label>Role <input type="text" name="role" value="{{ e['role'] or '' }}" placeholder="Unknown"></label>
+      <button type="submit">Create application</button>
+    </form>
+    <form class="inline" method="post" action="{{ url_for('dismiss', email_id=e['id']) }}">
+      <button type="submit">Dismiss</button>
+    </form>
+  </div>
+</section>
+{% endfor %}
+{% endblock %}

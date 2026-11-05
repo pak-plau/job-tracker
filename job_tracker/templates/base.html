@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% block head %}{% endblock %}
+  <title>{% block title %}{% endblock %} · Job Tracker</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f7f5; --panel: #ffffff; --text: #1d1f21; --muted: #5f6368; --line: #dcdcd8;
+      --accent: #1f5fbf; --accent-text: #ffffff; --warn-bg: #fff4d6; --warn-text: #5c4300;
+      --reply-bg: #eaf1fb; --reply-text: #123a78;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #17181a; --panel: #212326; --text: #e8e8e6; --muted: #a4a7ab; --line: #3a3d41;
+        --accent: #8ab4f8; --accent-text: #10213d; --warn-bg: #43350f; --warn-text: #ffe39a;
+        --reply-bg: #1d2c44; --reply-text: #cfe0fb;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    a { color: var(--accent); }
+    header { background: var(--panel); border-bottom: 1px solid var(--line); }
+    .bar { max-width: 1040px; margin: auto; padding: 10px 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; }
+    .brand { font-weight: 650; }
+    nav { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+    nav a { text-decoration: none; padding: 3px 0; border-bottom: 2px solid transparent; color: var(--text); }
+    nav a[aria-current="page"] { border-color: var(--accent); font-weight: 600; }
+    .count { margin-left: auto; color: var(--muted); }
+    .count.waiting { color: var(--reply-text); background: var(--reply-bg); padding: 2px 10px; border-radius: 999px; font-weight: 600; }
+    main { max-width: 1040px; margin: auto; padding: 8px 16px 48px; }
+    h1 { font-size: 22px; margin: 18px 0 10px; }
+    h2 { font-size: 17px; margin: 0 0 8px; }
+    .warning { background: var(--warn-bg); color: var(--warn-text); padding: 10px 14px; border-radius: 6px; margin-top: 14px; overflow-wrap: anywhere; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; margin: 14px 0; }
+    .replies { background: var(--reply-bg); color: var(--reply-text); }
+    .replies form.inline { align-items: center; gap: 12px; }
+    .table { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 7px 10px 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--muted); font-weight: 600; font-size: 13px; }
+    tr:last-child td { border-bottom: 0; }
+    .muted { color: var(--muted); }
+    .small { font-size: 13px; }
+    .subject { font-weight: 600; overflow-wrap: anywhere; }
+    .tag { display: inline-block; padding: 0 8px; border-radius: 999px; font-size: 13px; background: var(--reply-bg); color: var(--reply-text); }
+    .actions { display: flex; flex-wrap: wrap; gap: 14px 24px; margin-top: 12px; align-items: flex-end; }
+    form.inline { display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-end; margin: 0; }
+    label { display: block; font-size: 13px; color: var(--muted); }
+    label.check { display: flex; gap: 6px; align-items: center; font-size: 15px; color: var(--text); }
+    input[type=text], select { display: block; max-width: 100%; padding: 6px 8px; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 5px; margin-top: 2px; }
+    select { width: 240px; }
+    button { padding: 6px 12px; font: inherit; border: 1px solid var(--line); border-radius: 5px; background: var(--panel); color: var(--text); cursor: pointer; }
+    button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    ol.timeline { list-style: none; margin: 0; padding: 0; }
+    ol.timeline li { padding: 10px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+    ol.timeline li:last-child { border-bottom: 0; }
+    .stack > * + * { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <span class="brand">Job Tracker</span>
+      <nav aria-label="Pages">
+        {% set page = request.endpoint %}
+        <a href="{{ url_for('applications') }}" {% if page in ('applications', 'application') %}aria-current="page"{% endif %}>Applications</a>
+        <a href="{{ url_for('review') }}" {% if page == 'review' %}aria-current="page"{% endif %}>Review List ({{ review_count }})</a>
+        <a href="{{ url_for('discarded') }}" {% if page == 'discarded' %}aria-current="page"{% endif %}>Discarded</a>
+        <a href="{{ url_for('sync_page') }}" {% if page == 'sync_page' %}aria-current="page"{% endif %}>Sync</a>
+      </nav>
+      <span class="count {% if reply_count %}waiting{% endif %}">{{ reply_count }} needing a reply</span>
+    </div>
+  </header>
+  <main>
+    {% for warning in warnings %}<p class="warning" role="alert">{{ warning }}</p>{% endfor %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

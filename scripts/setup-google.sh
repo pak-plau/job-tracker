@@ -250,7 +250,7 @@ if [[ ! -e data/credentials.json ]] || confirm "Replace the existing data/creden
   say "Saved to data/credentials.json, which git ignores."
 fi
 say ""
-say "Next, with your virtual environment active, run: python -m evals.label"
+say "Next, with your virtual environment active, run: python -m job_tracker sync"
 say "Your browser will open for sign-in. Google will warn that the app isn't verified,"
 say "because it's your own app. Choose Advanced, continue, and allow read-only access."
 pause "Press Enter to finish"

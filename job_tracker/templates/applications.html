@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Applications{% endblock %}
+{% block content %}
+{% if replies %}
+<section class="panel replies">
+  <h2>Needs your reply</h2>
+  <div class="table">
+    <table>
+      <thead><tr><th scope="col">Company</th><th scope="col">Role</th><th scope="col">Waiting</th><th scope="col"><span class="muted">Actions</span></th></tr></thead>
+      <tbody>
+      {% for a in replies %}
+        <tr>
+          <td><a href="{{ url_for('application', application_id=a['id']) }}">{{ a['company'] }}</a></td>
+          <td>{{ a['role'] or 'Unknown' }}</td>
+          <td>{{ a['needs_reply_since'] | waited }}</td>
+          <td>
+            <form class="inline" method="post" action="{{ url_for('reply_done', application_id=a['id']) }}">
+              {% if a['needs_reply_link'] %}<a href="{{ a['needs_reply_link'] }}" target="_blank" rel="noopener noreferrer">Open in Gmail</a>&nbsp;{% endif %}
+              <button type="submit">Mark as done</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+<h1>Applications</h1>
+<div class="panel">
+{% if applications %}
+  <div class="table">
+    <table>
+      <thead><tr><th scope="col">Company</th><th scope="col">Role</th><th scope="col">Status</th><th scope="col">Last email</th></tr></thead>
+      <tbody>
+      {% for a in applications %}
+        <tr>
+          <td><a href="{{ url_for('application', application_id=a['id']) }}">{{ a['company'] }}</a></td>
+          <td>{{ a['role'] or 'Unknown' }}</td>
+          <td>{{ a['status'] }}{% if a['needs_reply_since'] %} <span class="tag">Needs reply</span>{% endif %}</td>
+          <td>{{ a['last_email'] | day }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <p class="muted">No applications yet. Run a sync to read your job email.</p>
+{% endif %}
+</div>
+
+{% if removed %}
+<details class="panel">
+  <summary>Removed applications ({{ removed | length }})</summary>
+  <div class="table">
+    <table>
+      <tbody>
+      {% for a in removed %}
+        <tr>
+          <td><a href="{{ url_for('application', application_id=a['id']) }}">{{ a['company'] }}</a></td>
+          <td>{{ a['role'] or 'Unknown' }}</td>
+          <td>{{ a['status'] }}</td>
+          <td>
+            <form method="post" action="{{ url_for('restore', application_id=a['id']) }}">
+              <button type="submit">Restore</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</details>
+{% endif %}
+{% endblock %}
