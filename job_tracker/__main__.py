@@ -7,6 +7,13 @@ from job_tracker.db import DB_FILE
 from job_tracker.gmail import open_mailbox
 from job_tracker.sync import run_sync
 
+BAR_WIDTH = 30
+
+
+def _progress_bar(done, total):
+    filled = BAR_WIDTH * done // total
+    return f"\r[{'#' * filled}{'-' * (BAR_WIDTH - filled)}] {done}/{total} emails ({100 * done // total}%)"
+
 
 def main():
     parser = argparse.ArgumentParser(prog="python -m job_tracker", description="Track job applications from Gmail.")
@@ -30,13 +37,25 @@ def main():
 
     # Only a person at a terminal can complete a browser sign-in. The schedule and the page can't.
     interactive = bool(sys.stdin and sys.stdin.isatty())
+    terminal = bool(sys.stdout and sys.stdout.isatty())
+    bar_shown = False
+
+    def show_progress(done, total):
+        nonlocal bar_shown
+        if terminal:
+            bar_shown = True
+            print(_progress_bar(done, total), end="", flush=True)
+
     outcome = run_sync(
         DB_FILE,
         lambda: open_mailbox(interactive),
         lambda email: classify(email, DEFAULT_MODEL),
         days=args.days,
         only_if_due=args.if_due,
+        on_progress=show_progress,
     )
+    if bar_shown:
+        print()
     print(outcome["message"])
     return 0 if outcome["ok"] else 1
 

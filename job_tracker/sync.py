@@ -24,10 +24,11 @@ def utc_now():
     return datetime.now(timezone.utc).replace(microsecond=0)
 
 
-def run_sync(path, open_mailbox, classify_email, days=None, only_if_due=False, now=utc_now):
+def run_sync(path, open_mailbox, classify_email, days=None, only_if_due=False, now=utc_now, on_progress=lambda done, total: None):
     """Process all new mail, returning {ok, message}. Whatever saved before a failure stays saved.
 
     days can only look further back. If a run with days fails, repeat it with the same days to finish it.
+    on_progress(done, total) is called before the first new email and after each one.
     """
     conn = db.connect(path)
     try:
@@ -42,7 +43,7 @@ def run_sync(path, open_mailbox, classify_email, days=None, only_if_due=False, n
             try:
                 mailbox = open_mailbox()
                 query = f"{SEARCH} after:{int(_search_start(last, days, now()).timestamp())}"
-                count = _process_new_mail(conn, run_id, mailbox, classify_email, query, now)
+                count = _process_new_mail(conn, run_id, mailbox, classify_email, query, now, on_progress)
             except BaseException as error:
                 message = _plain_error(error, path)
                 _finish(conn, run_id, "failed", message, now())
@@ -57,10 +58,12 @@ def run_sync(path, open_mailbox, classify_email, days=None, only_if_due=False, n
         conn.close()
 
 
-def _process_new_mail(conn, run_id, mailbox, classify_email, query, now):
+def _process_new_mail(conn, run_id, mailbox, classify_email, query, now, on_progress):
     """Return how many emails were processed, or None if another sync took over."""
     new = [email_id for email_id in reversed(list(mailbox.ids(query))) if not db.is_processed(conn, email_id)]
     conn.execute("UPDATE sync_runs SET total = ? WHERE id = ?", (len(new), run_id))
+    if new:
+        on_progress(0, len(new))
     for done, email_id in enumerate(new):
         if conn.execute("SELECT status FROM sync_runs WHERE id = ?", (run_id,)).fetchone()[0] != "running":
             return None
@@ -71,6 +74,7 @@ def _process_new_mail(conn, run_id, mailbox, classify_email, query, now):
             result = None  # goes to the Review List, because stopping would block every later email forever
         db.save_email(conn, email, result, mailbox.link(email_id), now().isoformat())
         conn.execute("UPDATE sync_runs SET done = ? WHERE id = ?", (done + 1, run_id))
+        on_progress(done + 1, len(new))
     return len(new)
 
 

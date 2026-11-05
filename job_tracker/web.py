@@ -29,7 +29,7 @@ def start_sync_process():
     subprocess.Popen(
         [sys.executable, "-m", "job_tracker", "sync"],
         cwd=ROOT,
-        stdin=subprocess.DEVNULL,
+        stdin=subprocess.PIPE,  # Windows counts DEVNULL as a terminal, and this process mustn't wait on a browser sign-in
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),

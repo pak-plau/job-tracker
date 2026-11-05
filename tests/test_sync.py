@@ -1,3 +1,6 @@
+import io
+import subprocess
+import sys
 import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
@@ -5,7 +8,7 @@ from pathlib import Path
 from unittest import mock
 from xml.etree import ElementTree
 
-from job_tracker import db, gmail, schedule, sync
+from job_tracker import __main__ as command, db, gmail, schedule, sync, web
 from job_tracker.classify import ClassifyError, UnusableAnswer
 from job_tracker.gmail import SignInNeeded
 
@@ -45,6 +48,73 @@ class SyncTestCase(unittest.TestCase):
 
     def latest(self):
         return sync.latest_run(self.conn)
+
+
+class Terminal(io.StringIO):
+    def isatty(self):
+        return True
+
+
+class ProgressBarTest(SyncTestCase):
+    BAR_DONE = "[" + "#" * 30 + "] 2/2 emails (100%)"
+
+    def run_command(self, stdout, ids=("new", "old"), classify=None):
+        classify = classify or (lambda email, model: {"category": "irrelevant", "company": None, "role": None})
+        with (
+            mock.patch.object(command, "DB_FILE", self.path),
+            mock.patch.object(command, "open_mailbox", lambda interactive: FakeMailbox(ids)),
+            mock.patch.object(command, "classify", classify),
+            mock.patch("sys.argv", ["job_tracker", "sync"]),
+            mock.patch("sys.stdout", stdout),
+        ):
+            return command.main()
+
+    def test_reports_progress_from_zero_to_the_total(self):
+        calls = []
+        self.run_sync(FakeMailbox(["new", "old"]), on_progress=lambda done, total: calls.append((done, total)))
+        self.assertEqual(calls, [(0, 2), (1, 2), (2, 2)])
+
+    def test_terminal_shows_a_filling_bar_then_the_result_on_its_own_line(self):
+        terminal = Terminal()
+        self.assertEqual(self.run_command(terminal), 0)
+        self.assertEqual(
+            terminal.getvalue().split("\r")[1:],
+            [
+                "[" + "-" * 30 + "] 0/2 emails (0%)",
+                "[" + "#" * 15 + "-" * 15 + "] 1/2 emails (50%)",
+                self.BAR_DONE + "\nProcessed 2 new emails.\n",
+            ],
+        )
+
+    def test_failure_message_starts_on_its_own_line(self):
+        def fail(email, model):
+            raise ClassifyError("Ollama isn't running.")
+
+        terminal = Terminal()
+        self.assertEqual(self.run_command(terminal, classify=fail), 1)
+        self.assertTrue(terminal.getvalue().endswith("0/2 emails (0%)\nOllama isn't running.\n"))
+
+    def test_no_new_email_draws_no_bar(self):
+        terminal = Terminal()
+        self.run_command(terminal, ids=())
+        self.assertEqual(terminal.getvalue(), "Processed 0 new emails.\n")
+
+    def test_output_going_to_a_file_gets_only_the_result(self):
+        output = io.StringIO()
+        self.run_command(output)
+        self.assertEqual(output.getvalue(), "Processed 2 new emails.\n")
+
+    def test_scheduled_sync_with_no_output_at_all_still_runs(self):
+        self.assertEqual(self.run_command(None), 0)  # pythonw gives the process no stdout
+        self.assertEqual(self.latest()["status"], "succeeded")
+
+    def test_sync_started_by_the_page_cannot_ask_for_a_browser_sign_in(self):
+        with mock.patch("subprocess.Popen") as popen:
+            web.start_sync_process()
+        # Runs a real process, because Windows counts the null device as a terminal.
+        check = "import sys; sys.exit(sys.stdin.isatty())"
+        child = subprocess.run([sys.executable, "-c", check], stdin=popen.call_args.kwargs["stdin"])
+        self.assertEqual(child.returncode, 0)
 
 
 class RunSyncTest(SyncTestCase):

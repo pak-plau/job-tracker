@@ -40,7 +40,7 @@ You need [Python 3.12](https://www.python.org/downloads/), [Git](https://git-scm
    python -m job_tracker sync
    ```
 
-   The first sync reads the last 90 days, oldest first, at about 2-3 seconds per email with a GPU. That can take hours if you get a lot of job email. If it stops, run it again and it carries on where it left off. To go further back, add `--days 365`.
+   The first sync reads the last 90 days, oldest first, at about 2-3 seconds per email with a GPU. That can take hours if you get a lot of job email, and a progress bar shows how far along it is. If it stops, run it again and it carries on where it left off. To go further back, add `--days 365`.
 
 5. **Sync automatically every day** at 8:00 AM, catching up if your computer was off:
 
