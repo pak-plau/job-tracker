@@ -11,7 +11,7 @@ from job_tracker.classify import ClassifyError, classify, normalize_company
 from job_tracker.gmail import DATA_DIR
 
 # Smallest download first, because a full tie goes to the model listed first.
-MODELS = ["gemma3:1b", "granite4.2:3b", "qwen3.5:2b", "gemma3:4b"]
+MODELS = ["qwen3.5:2b", "gemma3:4b"]
 
 
 def score(rows):
@@ -41,7 +41,7 @@ def score(rows):
 def _outcome(label, predicted):
     if predicted == label:
         return "correct"
-    if predicted == "irrelevant":
+    if predicted in ("irrelevant", "job_alert"):
         return "lost"  # the email would be discarded rather than acted on or reviewed
     if predicted == "unclear":
         return "needless_review"

@@ -40,6 +40,9 @@ class ScoreTest(unittest.TestCase):
         self.assertEqual(got["needless_review"], 2)
         self.assertEqual(got["errors"], 1)
 
+    def test_real_email_filed_as_job_alert_is_lost(self):
+        self.assertEqual(score([row("confirmation", "job_alert")])["lost"], 1)
+
     def test_company_uses_normalized_names_and_skips_unlabeled(self):
         rows = [
             row("offer", "offer", company="Stripe", predicted_company="Stripe, Inc."),
@@ -129,6 +132,11 @@ class LabelEmailsTest(unittest.TestCase):
     def test_irrelevant_emails_do_not_ask_for_company_or_role(self):
         self.run_with(["a", "b"], ["n", "o", "Acme", ""])
         self.assertEqual(self.saved()[0]["label"], {"category": "irrelevant", "company": None, "role": None})
+        self.assertEqual(self.saved()[1]["label"], {"category": "offer", "company": "Acme", "role": None})
+
+    def test_job_alerts_do_not_ask_for_company_or_role(self):
+        self.run_with(["a", "b"], ["j", "o", "Acme", ""])
+        self.assertEqual(self.saved()[0]["label"], {"category": "job_alert", "company": None, "role": None})
         self.assertEqual(self.saved()[1]["label"], {"category": "offer", "company": "Acme", "role": None})
 
     def test_information_requests_can_be_labeled_with_company_and_role(self):

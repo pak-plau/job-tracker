@@ -1,5 +1,6 @@
 """Read-only access to the person's Gmail. See docs/adr/0001-local-only.md."""
 import base64
+import re
 from datetime import datetime, timezone
 from email import message_from_bytes, policy
 from html.parser import HTMLParser
@@ -12,6 +13,7 @@ SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 
 # shortcut: only the start of an email reaches the model, raise this if the test shows decisions being cut off.
 MAX_TEXT_CHARS = 8000
+_LINK = re.compile(r"https?://\S+")
 
 # Deliberately broad: the local model is free, and a narrow search could miss a rejection unnoticed.
 SEARCH = (
@@ -81,12 +83,17 @@ def parse_message(response):
 
 
 def _body_text(message):
-    plain = message.get_body(preferencelist=("plain",))
-    text = _decode(plain).strip() if plain else ""
-    if text:
-        return text
-    html = message.get_body(preferencelist=("html",))
-    return _html_to_text(_decode(html)) if html else ""
+    plain_part = message.get_body(preferencelist=("plain",))
+    html_part = message.get_body(preferencelist=("html",))
+    # Links are dropped because LinkedIn's plain text is mostly tracking links, which used up the character cap.
+    plain = _LINK.sub("", _decode(plain_part)).strip() if plain_part else ""
+    html = _html_to_text(_decode(html_part)) if html_part else ""
+    # Some plain versions leave out text only the HTML has, including the wording of LinkedIn rejections.
+    return html if _word_count(html) > _word_count(plain) else plain
+
+
+def _word_count(text):
+    return sum(any(c.isalnum() for c in token) for token in text.split())
 
 
 def _decode(part):
@@ -99,7 +106,8 @@ def _decode(part):
 def _html_to_text(html):
     parser = _TextExtractor()
     parser.feed(html)
-    return " ".join(" ".join(parser.chunks).split())
+    # U+034F is invisible filler that LinkedIn repeats to pad out its emails.
+    return " ".join(" ".join(parser.chunks).replace("͏", "").split())
 
 
 class _TextExtractor(HTMLParser):

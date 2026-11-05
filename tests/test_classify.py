@@ -73,7 +73,7 @@ class ClassifyTest(unittest.TestCase):
         self.assertIn("num_predict", body["options"])
         self.assertEqual(
             sorted(body["format"]["properties"]["category"]["enum"]),
-            ["confirmation", "info_request", "interview", "irrelevant", "offer", "rejection", "unclear"],
+            ["confirmation", "info_request", "interview", "irrelevant", "job_alert", "offer", "rejection", "unclear"],
         )
         self.assertNotIn("num_gpu", body["options"])
 

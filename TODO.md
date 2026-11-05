@@ -26,7 +26,8 @@ To pick this back up with Claude Code, open it in this folder and say "continue 
   | `r` | The company isn't moving forward | 5 |
   | `o` | Job offer | Any you have |
   | `u` | About your application, but you can't tell what it means | 1-3 |
-  | `n` | Anything else, including job alerts and interview reminders | About 7 |
+  | `j` | Newsletter or alert listing open roles you could apply to | 3-5 |
+  | `n` | Anything else, including other newsletters and interview reminders | About 7 |
   | `s` | Skip, leaving it out of the test | |
   | `q` | Save and quit | |
 
@@ -44,9 +45,12 @@ To pick this back up with Claude Code, open it in this folder and say "continue 
 
 ## Claude's next steps
 
-- [ ] Count how many labeled emails hit the 8,000-character limit, showing numbers only, and raise the limit if several do.
-- [ ] Pick the default model from the scores, and adjust the prompt if real emails show interview invitations being labeled `info_request`.
-- [ ] Delete the three losing models from Ollama.
+- [x] Count how many labeled emails hit the 8,000-character limit: 1 of 49, so the limit stays.
+- [x] Pick the default model from the scores: `gemma3:4b`, at 42/49 correct, 2 wrong status and 5 lost. All 5 lost are irrelevant emails filed as `job_alert`, which are discarded either way.
+- [x] Stop confirmations being filed as `job_alert`: job site emails saying an application was sent didn't fit the `confirmation` definition, which is now wider.
+- [ ] Test more interview emails and any offer emails: the 49 labeled emails include 2 interviews and no offers.
+- [x] Delete `gemma3:1b` and `granite4.2:3b` from Ollama.
+- [ ] Delete `qwen3.5:2b` from Ollama and `compare.py` once offers are tested, if `gemma3:4b` still wins.
 
 ## Still to build
 
@@ -56,7 +60,7 @@ To pick this back up with Claude Code, open it in this folder and say "continue 
 4. [ ] Web page
 5. [ ] Setup guide for people cloning the repo
 
-Step 1 is committed on the `model-test` branch and hasn't been pushed.
+Step 1 is committed and pushed on the `model-test` branch.
 
 ## Agreed design
 
@@ -64,7 +68,7 @@ See `GLOSSARY.md` for terms and `docs/adr/0001-local-only.md` for why this runs 
 
 - **Setup:** Python and SQLite, with one private copy per person. Credentials, test emails and the database stay in the git-ignored `data/` folder.
 - **Gmail:** `gmail.readonly` only, with stored links to emails and no labels. The app stays in Testing, so sign-in expires every 7 days. The page must say so clearly, and sync must resume without missing mail.
-- **Model:** Ollama, with temperature 0, thinking off and a fixed JSON format. Categories are confirmation, interview, info_request, rejection, offer, unclear and irrelevant.
+- **Model:** Ollama, with temperature 0, thinking off and a fixed JSON format. Categories are confirmation, interview, info_request, rejection, offer, unclear, job_alert and irrelevant. A job_alert email stays out of the Applications table and the Review List.
 - **Statuses:** Applied, Interviewing, Rejected and Offer. Forward moves are automatic, contradictions of a final status go to the Review List, and repeats are only logged.
 - **Matching:**
   - The company name comes from the email's content and is cleaned up before comparing.

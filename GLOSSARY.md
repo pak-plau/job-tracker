@@ -72,6 +72,10 @@ _Avoid_: Acceptance email
 A job-related email whose meaning cannot be determined with confidence.
 _Avoid_: Unknown email, low-confidence email
 
+**Job Alert**:
+A newsletter, alert or recommendation of open roles the person could apply to. It is not about an Application they already made, so it never creates or changes an Application and never goes on the Review List.
+_Avoid_: Job digest, job newsletter
+
 **Review List**:
 The emails the tracker refuses to decide on, waiting for the person to resolve them: Unclear Emails, emails that could match more than one Application, Interview Invitations, Information Requests, Rejection Emails or Offer Emails with no matching Application, and emails that contradict a final Status.
 _Avoid_: Queue, inbox, triage

@@ -18,9 +18,10 @@ ANSWERS = {
     "r": "rejection",
     "o": "offer",
     "u": "unclear",
+    "j": "job_alert",
     "n": "irrelevant",
 }
-PROMPT = "[c]onfirmation [i]nterview [m]ore info requested [r]ejection [o]ffer [u]nclear [n]ot relevant | [s]kip [q]uit: "
+PROMPT = "[c]onfirmation [i]nterview [m]ore info requested [r]ejection [o]ffer [u]nclear [j]ob alert [n]ot relevant | [s]kip [q]uit: "
 
 
 def label_emails(ids, fetch_email, path, ask=input, show=print):
@@ -43,7 +44,7 @@ def label_emails(ids, fetch_email, path, ask=input, show=print):
             continue
         category = ANSWERS[answer]
         company = role = None
-        if category != "irrelevant":
+        if category not in ("irrelevant", "job_alert"):
             company = ask("Company (Enter if not stated): ").strip() or None
             role = ask("Role (Enter if not stated): ").strip() or None
         email["label"] = {"category": category, "company": company, "role": role}
