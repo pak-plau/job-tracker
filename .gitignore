@@ -13,3 +13,5 @@ model_results.json
 .env
 .env.*
 TODO.md
+# Graphify
+graphify-out/
